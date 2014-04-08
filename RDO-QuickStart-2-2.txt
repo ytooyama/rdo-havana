@@ -1,0 +1,811 @@
+
+RDO Neutron Multi Quickstart Plus
+GRE-Compute 3台構成編
++++++++++++++++++++++++++++++++++++
+
+最終更新日: 2014/4/1
+
+
+■この文書について
+この文書は以下の構成でOpenStack Havana環境をさくっと構築する場合の手順を説明しています。
+サーバーとは別途、クライアントを用意して、同じネットワークに接続します｡
+
+この文書は以下の構成でOpenStack Havana環境をさくっと構築する場合の手順を説明しています。
+サーバーとは別途、クライアントを用意して同じネットワークに接続します｡
+
+・クライアント
+-Horizonアクセス用
+
+・NFSサーバー
+-cinder-volume
+
+・Node1
+-Controller
+-Network
+
+・Node2
+-Compute
+
+・Node3
+-Compute
+
+・gre-tunneling
+
+
+この文書は以下の公開資料を元にしています。
+
+RDO Neutron Quickstart
+http://openstack.redhat.com/Neutron-Quickstart
+http://openstack.redhat.com/Adding_a_compute_node
+http://openstack.redhat.com/Neutron_with_existing_external_network
+http://openstack.redhat.com/Using_GRE_tenant_networks
+
+■行うこと一覧
+各ノードに対して行う作業は次の通りです｡
+
+◆クライアント
+・固定IPアドレスの割り当て
+・ブラウザのインストール
+
+◆Node1
+・固定IPアドレスの割り当て
+・sysctl.confの設定
+・hostsファイルの設定
+・Havanaリポジトリーの追加
+・システムアップデート
+・Packstackおよび必要パッケージのインストール
+・アンサーファイルを生成
+・アンサーファイルの編集
+・Packstackの実行
+・ネットワークの設定
+・ネットワークの追加
+・ユーザーの追加
+・Novaの設定変更
+
+◆Node2
+・固定IPアドレスの割り当て
+・sysctl.confの設定
+・hostsファイルの設定
+・Havanaリポジトリーの追加
+・システムアップデート
+・Packstackおよび必要パッケージのインストール
+・Novaの設定変更
+
+
+■事前準備
+
+Step 0: 要件
+
+Software: 
+・Red Hat Enterprise Linux (RHEL) 6.4以降
+・CentOS, Scientific Linux 6.4以降
+・Fedora 19
+
+Hardware:
+・CPU 2Core以上 
+・メモリー4GB以上
+・最低2つのNIC
+
+Network:
+・インターネットにアクセスできる環境
+
+訳注:
+本書では次のネットワーク構成を利用します。
+
+Public Network
+192.168.1.0/24
+
+Private Network
+192.168.0.0/24
+
+SELinux:
+下記公式サイトのコメントにあるようにSELinuxをpermissiveに設定する
+↓
+ただしdisableにするとpackstackが想定通り動かない模様。
+
+Note: Due to the quantum/neutron rename, SELinux policies are currently broken for Havana, so SELinux must be disabled/permissive on machines running neutron services, edit /etc/selinux/config to set SELINUX=permissive.
+
+
+Step 1: 固定IPアドレスの割り当て
+各ノードに固定のIPアドレスを割り当てます。
+
+クライアント
+eth0
+192.168.0.8/24
+eth1
+192.168.1.8/24
+
+Node1(CentOS 6.5)
+-コントローラ、ネットワークノード
+eth0
+192.168.0.10/24
+eth1
+192.168.1.10/24
+
+Node2(CentOS 6.5)
+-コンピュート1
+eth0
+192.168.0.11/24
+eth1
+192.168.1.11/24
+
+Node3(CentOS 6.5)
+-コンピュート2
+eth0
+192.168.0.12/24
+eth1
+192.168.1.12/24
+
+
+Step 2: sysctl.confの設定
+以下の通り、デフォルト設定から変更します。
+
+>--
+# vi /etc/sysctl.conf
+
+net.ipv4.ip_forward = 1              #変更
+net.ipv4.conf.default.rp_filter = 0  #変更
+
+net.bridge.bridge-nf-call-ip6tables = 0  #設定確認
+net.bridge.bridge-nf-call-iptables = 0   #設定確認
+net.bridge.bridge-nf-call-arptables = 0  #設定確認
+net.ipv4.conf.all.rp_filter = 0    #追記
+net.ipv4.conf.all.forwarding = 1   #追記
+
+# sysctl -e -p /etc/sysctl.conf
+（設定を反映）
+--<
+
+
+Step 3: hostsファイルの設定
+以下の通り、hostsに各ノードのホスト名を記述追加します。
+
+>--
+# vi /etc/hosts
+（略）
+192.168.0.10 node1.example.com node1
+192.168.0.11 node2.example.com node2
+192.168.0.12 node3.example.com node3
+--<
+
+
+Step 4: Havanaリポジトリーの追加
+ソフトウェアパッケージのインストールを行います｡
+
+ノード毎次のコマンドを実行します。
+
+>--
+# yum install -y http://rdo.fedorapeople.org/openstack-havana/rdo-release-havana.rpm
+--<
+
+
+Step 5: システムアップデート
+ノード毎システムアップデートを実施したら再起動します。
+
+>--
+# yum -y update
+# reboot
+--<
+
+
+■Packstackと必要パッケージのインストール
+
+Step 6: Packstackおよび必要パッケージのインストール
+ノード毎以下のようにコマンドを実行します｡
+
+>--
+# yum install -y openstack-packstack python-netaddr libguestfs-tools
+--<
+
+
+推奨:時刻同期サーバーの導入
+複数ノード間の通信時は時刻が正確に同期されている必要があります｡
+以下の手順にしたがって、各ノードにNTPサーバーを追加します。
+
+>--
+# yum install ntp
+# ntpdate ntp.nict.jp
+# chkconfig ntpd on
+# service ntpd start
+--<
+
+
+Step 7:　アンサーファイルを生成
+node1で以下のようにコマンドを実行します｡
+
+>--
+# packstack --gen-answer-file=answer.txt
+(answer.txtという名前のファイルを作成する場合)
+--<
+
+アンサーファイルを使うことで定義した環境でOpenStackをデプロイできます｡
+
+作成したアンサーファイルは1台のマシン（packstackを実行したノード）にすべてをインストールする設定が行われています｡IPアドレスや各種パスワードなどを適宜設定します｡
+
+
+Step 8:　アンサーファイルの編集
+とりあえず2台構成のOpenStack環境を作るには最低限以下のパラメータを設定します。
+
+・アンサーファイルのCONFIG_NOVA_COMPUTE_HOSTSにコンピュートノードを設定
+CONFIG_NOVA_COMPUTE_HOSTS=192.168.0.11,192.168.0.12
+
+・greの設定を行う
+CONFIG_NEUTRON_OVS_TENANT_NETWORK_TYPE=gre
+CONFIG_NEUTRON_OVS_TUNNEL_RANGES=1:1000
+CONFIG_NEUTRON_OVS_TUNNEL_IF=eth0
+
+・NICを利用したいものに変更する
+CONFIG_NOVA_COMPUTE_PRIVIF=eth0
+CONFIG_NOVA_NETWORK_PRIVIF=eth0
+CONFIG_NOVA_NETWORK_PUBIF=eth1
+
+・Dashboardにアクセスするパスワード
+CONFIG_KEYSTONE_ADMIN_PW=admin
+
+・テスト用demoユーザーとかネットワークを作らないようにする
+CONFIG_PROVISION_DEMO=n
+
+・IPアドレスを内向きのネットワークに変更する
+192.168.1.10 -> 192.168.0.10
+
+viで一括文字列置換えを行う場合
+:%s/192.168.1.10/192.168.0.10/gc
+
+replace with 192.168.0.10 (y/n/a/q/l/^E/^Y)?
+（上書き問い合わせに対して、yと入力していく）
+
+
+Step 9: RDOによるOpenStackのインストール
+
+設定を書き換えたアンサーファイルを使ってOpenStackを導入するには、次のようにアンサーファイルを指定して実行します。
+
+>--
+# packstack --answer-file=/root/answer.txt
+（略）
+Installing:
+Clean Up...                                            [ DONE ]
+Setting up ssh keys...root@192.168.0.10's password: 
+root@192.168.0.11's password: 
+root@192.168.0.12's password: 
+（ノード毎のrootアカウントパスワードを入力）
+--<
+
+
+Step 10: ネットワークの設定
+
+次に外部と通信できるようにするための設定を行います。
+http://openstack.redhat.com/Neutron_with_existing_external_network
+
+
+◆public用として使うNICの設定ファイルを修正
+packstack実行後、eth1をbr-exにつなぐように設定をします(※BOOTPROTOは設定しない)
+
+eth1からIPアドレス、サブネットマスク、ゲートウェイの設定を削除して次の項目だけを記述し、br-exの方に設定を書き込みます｡
+
+>--
+# vi /etc/sysconfig/network-scripts/ifcfg-eth1
+
+DEVICE=eth1
+ONBOOT=yes
+HWADDR=52:54:00:92:05:AE # your eth0's hwaddr
+TYPE=OVSPort
+DEVICETYPE=ovs
+OVS_BRIDGE=br-ex
+--<
+
+
+◆ブリッジインターフェイスの作成
+br-exにeth1のIPアドレスを設定します。
+
+>--
+# vi /etc/sysconfig/network-scripts/ifcfg-br-ex
+
+DEVICE=br-ex
+ONBOOT=yes
+DEVICETYPE=ovs
+TYPE=OVSBridge
+BOOTPROTO=none
+IPADDR=192.168.1.11
+NETMASK=255.255.255.0  # netmask
+GATEWAY=192.168.1.1    # gateway
+DNS1=8.8.8.8       # nameserver
+DNS2=8.8.4.4
+--<
+
+各ノードのneutron/plugin.iniに次の設定がされていることを確認します。
+local_ipをInternal側のIPアドレスを設定します｡
+
+>--
+# vi /etc/neutron/plugin.ini
+
+[OVS]
+vxlan_udp_port=4789
+tunnel_type=gre
+tunnel_id_ranges=1:1000
+tenant_network_type=gre
+local_ip=192.168.0.10
+enable_tunneling=True
+integration_bridge=br-int
+tunnel_bridge=br-tun
+
+[AGENT]
+polling_interval=2
+
+[SECURITYGROUP]
+firewall_driver=neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+--<
+
+ここまでできたらいったん各ノードを再起動します。
+
+>--
+# reboot
+--<
+
+
+■OpenStackの構成を行う
+
+Step 11: ネットワークの追加
+
+br-exにeth1を割り当てて仮想マシンをハイパーバイザー外部と通信できるようにする為の経路が確保されていることを確認します。
+
+>--
+# ovs-vsctl show
+c3f7d983-4248-49eb-a77f-a35d690fd19b
+    Bridge br-int
+        Port patch-tun
+            Interface patch-tun
+                type: patch
+                options: {peer=patch-int}
+        Port br-int
+            Interface br-int
+                type: internal
+    Bridge br-tun
+        Port "gre-3"
+            Interface "gre-3"
+                type: gre
+                options: {in_key=flow, local_ip="192.168.0.10", out_key=flow, remote_ip="192.168.0.12"}
+        Port br-tun
+            Interface br-tun
+                type: internal
+        Port patch-int
+            Interface patch-int
+                type: patch
+                options: {peer=patch-tun}
+        Port "gre-1"
+            Interface "gre-1"
+                type: gre
+                options: {in_key=flow, local_ip="192.168.0.10", out_key=flow, remote_ip="192.168.0.11"}
+    Bridge br-ex
+        Port br-ex
+            Interface br-ex
+                type: internal
+        Port "eth1"
+            Interface "eth1"
+    ovs_version: "1.11.0"--<
+
+OSやハードウェア側の設定が終わったら、OpenStackが利用するネットワークを作成してみましょう｡OpenStackにおけるネットワークの設定は以下の順で行います｡
+
+・ルーターを作成
+・ネットワークを作成
+・ネットワークサブネットを作成
+
+OpenStackの環境構成をコマンドで実行する場合は、/root/keystonerc_adminファイルをsourceコマンドで読み込んでから実行してください｡
+
+>--
+# source keystonerc_admin
+—<
+
+それでは順に行っていきましょう｡
+
+
+◆ルーターの作成
+ルーターの作成は次のようにコマンドを実行します。
+
+>--
+# neutron router-create router1
+Created a new router:
+（略）
+--<
+
+
+◆ネットワークの作成
+ネットワークの作成は次のようにコマンドを実行します。
+
+・パブリックネットワークの場合
+
+>--
+# neutron net-create public --router:external=True --tenant-id  2b0260a2580842abab33b56dae6a145f
+Created a new network:
+（略）
+--<
+
+net-createコマンドの先頭にはまずネットワーク名を記述します｡tenant-idは「keystone tenant-list」で出力される中から「テナント」を指定します。router:external=Trueは外部ネットワークとして指定するかしないかを設定します｡プライベートネットワークを作る場合は指定する必要はありません｡
+
+・プライベートネットワークの場合
+
+>--
+# neutron net-create demo-net --shared --tenant-id 20a6abed5e8549f29a76fa26b2b1c8db
+Created a new network:
+（略）
+--<
+ネットワークを共有するには--sharedオプションを付けて実行します｡
+
+
+◆ネットワークサブネットの登録
+ネットワークで利用するサブネットを定義します｡
+
+>--
+# neutron subnet-create --name public_subnet --enable_dhcp=False --allocation-pool=start=192.168.1.241,end=192.168.1.254 --gateway=192.168.1.1 public 192.168.1.0/24
+Created a new subnet:
+（略）
+--<
+
+これでpublic側ネットワークにサブネットなどを登録することができました｡
+次にdemo-net（プライベート）側に登録してみます。
+
+>--
+# neutron subnet-create --name demo-net_subnet --enable_dhcp=True --allocation-pool=start=192.168.0.100,end=192.168.0.254 --gateway=192.168.0.1 --dns-nameserver 8.8.8.8 demo-net 192.168.0.0/24
+Created a new subnet:
+（略）
+--<
+
+
+◆ゲートウェイの設定
+作成したルーター(router1)とパブリックネットワークを接続するため、「ゲートウェイの設定」を行います｡
+
+>--
+# neutron router-gateway-set router1 public
+Set gateway for router router1
+--<
+
+
+◆外部ネットワークと内部ネットワークの接続
+最後にプライベートネットワークを割り当てたインスタンスがFloating IPを割り当てられたときに外に出られるようにするために「ルーターにインターフェイスの追加」を行います｡
+
+>--
+# neutron router-interface-add router1 subnet=demo-net_subnet
+Added interface xxxx-xxxx-xxxx-xxxx-xxxx to router router1.
+--<
+
+routerはneutron router-listコマンドで確認、サブネットはneutron subnet-listコマンドで確認することができます。
+
+
+Step 12: ユーザーの追加
+次に、ユーザーの追加を行います｡
+ユーザーを作成する前にユーザーをどのテナント、つまりどのグループに追加するか考えます。作成したテナントにロール、つまり権限を割り振ることで指定した権限を持つユーザーをテナントに追加できます。
+
+ここでは例として、demoというテナントを作り、そのテナントにdemoユーザーを追加する流れを説明します。demoユーザーには利用に最低限必要なMemberの権限を割り当てます。
+
+・まず、登録済みのテナントを確認します。
+
+>--
+# keystone tenant-list 
++----------------------------------+----------+---------+
+|                id                |   name   | enabled |
++----------------------------------+----------+---------+
+| 2b0260a2580842abab33b56dae6a145f |  admin   |   True  |
+| 20a6abed5e8549f29a76fa26b2b1c8db | services |   True  |
++----------------------------------+----------+---------+
+（テナントリストの表示）
+--<
+
+・次にテナントを登録します。
+
+>--
+# keystone tenant-create --name demo --description demo-tenant --enable true
+（テナントdemoの作成）
+--<
+
+・追加したテナントが登録されていることを確認します。
+
+>--
+# keystone tenant-list
++----------------------------------+----------+---------+
+|                id                |   name   | enabled |
++----------------------------------+----------+---------+
+| 2b0260a2580842abab33b56dae6a145f |  admin   |   True  |
+| f1217f04d6f94a7ca3df1f4d6122322d |   demo   |   True  |
+| 20a6abed5e8549f29a76fa26b2b1c8db | services |   True  |
++----------------------------------+----------+---------+
+（テナントの確認）
+--<
+
+・demoユーザーを作成してみます。パスワードはdemoにします。
+
+>--
+# keystone user-create --name demo --pass demo --tenant demo --email demo@example.com --enabled true 
+--<
+
+ユーザー作成コマンドはkeystone user-createです。
+パラメータはいくつかあるので--helpで確認。--nameがユーザー名、--passがパスワード、--tenantはテナント(Horizonではプロジェクト)名、--enabledは有効化の可否を指定します｡
+
+・demoテナントを利用してもう一人、ユーザーを追加してみます｡
+
+>--
+# keystone user-create --name user --pass demo --tenant demo --email user@example.com --enabled true 
+--<
+
+・demoテナントに追加したユーザーを確認してみます｡
+同じテナント（tenantId）に追加されたことを確認します｡
+
+>--
+# keystone tenant-get demo
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+| description |           demo-tenant            |
+|   enabled   |               True               |
+|      id     | bdcd5aad18574d9eb8462284a050fdc6 |
+|     name    |               demo               |
++-------------+----------------------------------+
+# keystone user-get demo
++----------+----------------------------------+
+| Property |              Value               |
++----------+----------------------------------+
+|  email   |         demo@example.com         |
+| enabled  |               True               |
+|    id    | b6c216eab7fd41fc9155817a99051ab1 |
+|   name   |               demo               |
+| tenantId | bdcd5aad18574d9eb8462284a050fdc6 |
++----------+----------------------------------+
+# keystone user-get user
++----------+----------------------------------+
+| Property |              Value               |
++----------+----------------------------------+
+|  email   |         user@example.com         |
+| enabled  |               True               |
+|    id    | 2bb88855856047bf8ec40cfabc6481d3 |
+|   name   |               user               |
+| tenantId | bdcd5aad18574d9eb8462284a050fdc6 |
++----------+----------------------------------+
+--<
+
+・なぜかMemberロールが作られず、それのせいでHorizonの一部の設定にアクセスするとエラーとなるのでロールを追加します（バグ？）。
+
+>--
+# keystone role-list 
++----------------------------------+----------+
+|                id                |   name   |
++----------------------------------+----------+
+| 9fe2ff9ee4384b1894a90878d3e92bab | _member_ |
+| f45e9a92b3bc4d839a6f5043d5d5bd52 |  admin   |
++----------------------------------+----------+
+
+（Memberロールがなかったら、以下を実行）
+
+# keystone role-create --name Member
+--<
+
+tenantはHorizonで登録されている「プロジェクト」を確認するか、keystone tenant-listコマンドで確認できます。
+
+ユーザーに特定のロールを割り当てる場合は、次のように実行します｡
+
+>--
+# keystone user-role-add --user demo --tenant demo --role Member
+(demoユーザーをdemoテナントに追加してMemberロールを割り当て)
+
+# keystone user-role-add --user user --tenant demo --role Member
+(userユーザーも割り当て)
+--<
+
+ロールはkeystone role-listコマンドで確認できます｡
+
+作成したテナント、ユーザーを最後に確認しましょう。
+
+>--
+# keystone tenant-list
+（テナントリストの確認）
+# keystone user-list
+（ユーザーリストの確認）
+--<
+
+以上で、ユーザーdemoでOpenStack環境を利用可能になります。
+ユーザーはadminユーザーが設定した共有ネットワークを使ってインスタンスでネットワーク接続できます。また、Floating IPを割り当てることで外部PCからインスタンスにアクセスできます。
+
+もちろん、ユーザーが独自のネットワークを作ることもできます。その場合は次のように行います。
+
+・ルーターを作成
+・サブネットを作成
+・作成したサブネットとルーターをpublicネットワークとつなぐ
+
+
+
+Step 13: Novaの設定変更
+
+デフォルト設定のままインストールした場合、Novaは仮想化基盤にqemuを利用するようになっています。パフォーマンスを上げるには、コンピュートノードで次のように設定変更します。
+
+まずKVMモジュールが読み込まれていることを確認します。nova.confでタイプをkvmにします。
+
+>--
+# lsmod | grep kvm
+kvm_intel              54285  6 
+kvm                   332980  1 kvm_intel
+(Intel CPUの場合)
+kvm                   332980  1 kvm_amd
+(AMD CPUの場合)
+
+# vi /etc/nova/nova.conf
+（略）
+libvirt_type=kvm
+#libvirt_type=qemu
+（設定を変更）
+
+# service openstack-nova-compute reload
+--<
+
+
+Step 14: インスタンスイメージの登録
+
+OpenStack環境でインスタンスを実行するため、イメージの登録を行ってみます｡
+ここでは動作テスト用としてしばしば利用される、CirrOSを登録してみます｡
+
+CirrOSをダウンロードしてOpenStackに登録するには、次のように行います。
+
+>--
+# curl -OL http://download.cirros-cloud.net/0.3.2/cirros-0.3.2-x86_64-disk.img
+
+# glance image-create --name="CirrOS 0.3.2" --disk-format=qcow2 \--container-format=bare --is-public=true \< cirros-0.3.2-x86_64-disk.img
++------------------+--------------------------------------+
+| Property         | Value                                |
++------------------+--------------------------------------+
+| checksum         | 64d7c1cd2b6f60c92c14662941cb7913     |
+| container_format | bare                                 |
+| created_at       | 2014-03-31T02:08:50                  |
+| deleted          | False                                |
+| deleted_at       | None                                 |
+| disk_format      | qcow2                                |
+| id               | d1b69800-3b30-42b2-a0b4-3c4a97bcdb1b |
+| is_public        | True                                 |
+| min_disk         | 0                                    |
+| min_ram          | 0                                    |
+| name             | CirrOS 0.3.2                         |
+| owner            | 67962937e5f843d0985d23c01a644011     |
+| protected        | False                                |
+| size             | 13167616                             |
+| status           | active                               |
+| updated_at       | 2014-03-31T02:08:50                  |
++------------------+--------------------------------------+
+--<
+
+以上で、テスト用のインスタンスイメージを登録できました｡
+
+その他のOSを動かすには、公式ドキュメント
+「OpenStack Virtual Machine Image Guide」をご覧ください｡
+
+http://docs.openstack.org/image-guide/content/index.html
+
+
+■動作確認
+・「セキュリティグループ」でICMPとSSHを有効化
+・インスタンスを起動
+・ボリュームの作成
+・ボリュームをインスタンスに接続
+・dmesg | grep vdでディスク認識を確認
+
+利用するインスタンスは以下からダウンロードできます。
+
+Cirros
+http://download.cirros-cloud.net
+※0.3.1以上のバージョンを利用してください｡
+
+CentOS
+http://repos.fedorapeople.org/repos/openstack/guest-images/
+
+Fedora
+http://fedoraproject.org/en/get-fedora#clouds
+
+Ubuntu
+http://cloud-images.ubuntu.com
+
+
+・Floating IPをインスタンスに割り当て
+・ホストにSSHアクセスしてそこからインスタンスにアクセス
+
+
+■FAQ
+
+Q1:RDOで環境構築中、タイムアウトエラーがおき、スクリプトが停止しました。
+
+A1:何も設定変更を加えずにもう一度実行し直すと上手くいく場合があります。
+
+ネットワークアクセスと名前解決が頻繁にあり、それらが上手くいかないとスクリプトが途中で終了することがあるようです。
+
+
+Q2:ゲートウェイがDOWNなんですけど
+A2:無視
+
+
+Q3:ステータスを確認するには？
+A3:openstack-statusコマンドを実行！
+
+
+Q4:openstack-statusコマンドを実行するとサービスの一部が動いていないようです
+A4:「RDO Neutron Quickstart」の末尾に注意書きがあります
+
+If you installed the updated kernel and rebooted prior to running packstack, everything should work. If you installed the updated kernel as part of running packstack, you will need to reboot when packstack completes to boot into the new kernel. This reboot will cause br-ex to reset, so after the reboot you will need to re-run packstack as shown below:
+
+>--
+# packstack --answer-file=~/packstack-answers-*.txt
+--<
+
+同じアンサーファイルを使って、もう一度packstackを実行すると良いようです。
+
+
+Q5:日本語キーボードがつかえない
+A5:コンピュートノードのnova.confに以下のように追記
+
+>--
+# vi /etc/nova/nova.conf
+（略）
+# keymap for vnc (string value)
+#vnc_keymap=en-us
+vnc_keymap=ja  #追加する行
+
+
+# service openstack-nova-compute reload
+--<
+
+※ただし、OS側が日本語キーボードに対応している必要がある。
+（Cirrosは日本語キーボードを英語キーマップ認識で利用可能）
+
+
+Q6:作成したdemoユーザーの権限でコマンド操作するには
+A6:keystonerc_adminを編集して利用します
+
+>--
+# cp /root/keystonerc_admin /root/keystonerc_demo
+（keystonercをコピー）
+
+# vi /root/keystonerc_demo
+
+export OS_USERNAME=demo
+export OS_TENANT_NAME=demo
+export OS_PASSWORD=demo
+export OS_AUTH_URL=http://192.168.1.11:35357/v2.0/
+export PS1='[\u@\h \W(keystone_demo)]\$ '
+--<
+
+設定箇所
+・export OS_USERNAMEをdemo
+・export OS_TENANT_NAMEをdemo
+・export OS_PASSWORDをdemoユーザー作成時に設定したパスワード
+・export PS1をkeystone_demoに設定
+
+
+Q7:マルチノードでやるには
+A7:以下公式ドキュメントを参照。
+http://openstack.redhat.com/Adding_a_compute_node
+
+
+Q8:ボリュームの削除をすると状態が「Error_Deleting」のまま、いつまでたっても変わらない
+A8:検索すると類似例がいくつか見つかります｡次の手順で対処可能です｡
+
+【error_deleting関連】
+https://bugzilla.redhat.com/show_bug.cgi?id=888987
+https://bugs.launchpad.net/cinder/+bug/1039706
+https://ask.openstack.org/en/question/1378/cannot-remove-volume/
+
+>--
+# cinder list
++--------------------------------------+----------------+--------------+--
+|                  ID                  |     Status     | Display Name |
++--------------------------------------+----------------+--------------+--
+| 66f7139e-82c7-4d29-9c17-fe43dd42cac7 | error_deleting |    disk01    |
++--------------------------------------+----------------+--------------+--
+
+# mysql -u cinder -p -D cinder
+Enter password: 
+（パスワードはanswer.txtの"CONFIG_CINDER_DB_PW"の値を入力）
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> delete from volumes where id = '66f7139e-82c7-4d29-9c17-fe43dd42cac7';
+（削除）
+
+# cinder list
+（なくなったことを確認）
+--<
+
+以上の手順を実行することで、error_deleting状態の異常なSQLデータを削除できます。
+この方法ではSQLの登録データを削除しただけなので、別途手動でイメージボリュームを削除する必要があります｡
+本来なら、「cinder delete」や「cinder force-delete」コマンドを使って、作成したボリュームを削除できるはずですが、なんらかの理由により削除できなくなった場合はこの手段で削除できます｡
