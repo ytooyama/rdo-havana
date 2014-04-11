@@ -3,7 +3,7 @@ RDO Neutron Multi Quickstart Plus
 GRE-Compute 2台構成編
 +++++++++++++++++++++++++++++++++++
 
-最終更新日: 2014/4/9
+最終更新日: 2014/4/11
 
 
 ■この文書について
@@ -39,6 +39,7 @@ http://openstack.redhat.com/Using_GRE_tenant_networks
 ◆Node1
 ・固定IPアドレスの割り当て
 ・sysctl.confの設定
+・SELinuxの設定変更
 ・hostsファイルの設定
 ・Havanaリポジトリーの追加
 ・システムアップデート
@@ -54,6 +55,7 @@ http://openstack.redhat.com/Using_GRE_tenant_networks
 ◆Node2
 ・固定IPアドレスの割り当て
 ・sysctl.confの設定
+・SELinuxの設定変更
 ・hostsファイルの設定
 ・Havanaリポジトリーの追加
 ・システムアップデート
@@ -86,13 +88,6 @@ Public Network
 
 Private Network
 192.168.0.0/24
-
-SELinux:
-下記公式サイトのコメントにあるようにSELinuxをpermissiveに設定する
-↓
-ただしdisableにするとpackstackが想定通り動かない模様。
-
-Note: Due to the quantum/neutron rename, SELinux policies are currently broken for Havana, so SELinux must be disabled/permissive on machines running neutron services, edit /etc/selinux/config to set SELINUX=permissive.
 
 
 Step 1: 固定IPアドレスの割り当て
@@ -138,7 +133,19 @@ net.ipv4.conf.all.forwarding = 1   #追記
 --<
 
 
-Step 3: hostsファイルの設定
+Step 3: SELinuxの設定変更
+各ノードのSELinuxの設定を変更します｡
+
+下記公式サイトのコメントにあるようにSELinuxをpermissiveに設定する
+↓
+ただしdisableにするとpackstackが想定通り動かない模様。
+
+http://openstack.redhat.com/SELinux_issues
+
+Note: Due to the quantum/neutron rename, SELinux policies are currently broken for Havana, so SELinux must be disabled/permissive on machines running neutron services, edit /etc/selinux/config to set SELINUX=permissive.
+
+
+Step 4: hostsファイルの設定
 以下の通り、hostsに各ノードのホスト名を記述追加します。
 
 >--
@@ -150,7 +157,7 @@ Step 3: hostsファイルの設定
 --<
 
 
-Step 4: Havanaリポジトリーの追加
+Step 5: Havanaリポジトリーの追加
 ソフトウェアパッケージのインストールを行います｡
 
 ノード毎次のコマンドを実行します。
@@ -160,7 +167,7 @@ Step 4: Havanaリポジトリーの追加
 --<
 
 
-Step 5: システムアップデート
+Step 6: システムアップデート
 ノード毎システムアップデートを実施したら再起動します。
 
 >--
@@ -171,7 +178,7 @@ Step 5: システムアップデート
 
 ■Packstackと必要パッケージのインストール
 
-Step 6: Packstackおよび必要パッケージのインストール
+Step 7: Packstackおよび必要パッケージのインストール
 ノード毎以下のようにコマンドを実行します｡
 
 Glance、Computeを実行するノードでは以下を実行
@@ -198,7 +205,7 @@ Glance、Computeを実行するノードでは以下を実行
 --<
 
 
-Step 7:　アンサーファイルを生成
+Step 8:　アンサーファイルを生成
 node1で以下のようにコマンドを実行します｡
 
 >--
@@ -211,7 +218,7 @@ node1で以下のようにコマンドを実行します｡
 作成したアンサーファイルは1台のマシン（packstackを実行したノード）にすべてをインストールする設定が行われています｡IPアドレスや各種パスワードなどを適宜設定します｡
 
 
-Step 8:　アンサーファイルの編集
+Step 9:　アンサーファイルの編集
 とりあえず2台構成のOpenStack環境を作るには最低限以下のパラメータを設定します。
 
 ・アンサーファイルのCONFIG_NOVA_COMPUTE_HOSTSにコンピュートノードを設定
@@ -243,7 +250,7 @@ replace with 192.168.0.11 (y/n/a/q/l/^E/^Y)?
 （上書き問い合わせに対して、yと入力していく）
 
 
-Step 9: RDOによるOpenStackのインストール
+Step 10: RDOによるOpenStackのインストール
 
 設定を書き換えたアンサーファイルを使ってOpenStackを導入するには、次のようにアンサーファイルを指定して実行します。
 
@@ -258,7 +265,7 @@ root@192.168.0.12's password:
 --<
 
 
-Step 10: ネットワークの設定
+Step 11: ネットワークの設定
 
 次に外部と通信できるようにするための設定を行います。
 http://openstack.redhat.com/Neutron_with_existing_external_network
@@ -331,7 +338,7 @@ firewall_driver=neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallD
 
 ■OpenStackの構成を行う
 
-Step 11: ネットワークの追加
+Step 12: ネットワークの追加
 
 br-exにeth1を割り当てて仮想マシンをハイパーバイザー外部と通信できるようにする為の経路が確保されていることを確認します。
 
@@ -450,7 +457,7 @@ Added interface xxxx-xxxx-xxxx-xxxx-xxxx to router router1.
 routerはneutron router-listコマンドで確認、サブネットはneutron subnet-listコマンドで確認することができます。
 
 
-Step 12: ユーザーの追加
+Step 13: ユーザーの追加
 次に、ユーザーの追加を行います｡
 ユーザーを作成する前にユーザーをどのテナント、つまりどのグループに追加するか考えます。作成したテナントにロール、つまり権限を割り振ることで指定した権限を持つユーザーをテナントに追加できます。
 
@@ -589,8 +596,7 @@ tenantはHorizonで登録されている「プロジェクト」を確認する�
 ・作成したサブネットとルーターをpublicネットワークとつなぐ
 
 
-
-Step 13: Novaの設定変更
+Step 14: Novaの設定変更
 
 デフォルト設定のままインストールした場合、Novaは仮想化基盤にqemuを利用するようになっています。パフォーマンスを上げるには、コンピュートノードで次のように設定変更します。
 
@@ -614,7 +620,7 @@ libvirt_type=kvm
 --<
 
 
-Step 14: インスタンスイメージの登録
+Step 15: インスタンスイメージの登録
 
 OpenStack環境でインスタンスを実行するため、イメージの登録を行ってみます｡
 ここでは動作テスト用としてしばしば利用される、CirrOSを登録してみます｡
@@ -680,112 +686,3 @@ http://cloud-images.ubuntu.com
 
 ・Floating IPをインスタンスに割り当て
 ・ホストにSSHアクセスしてそこからインスタンスにアクセス
-
-
-■FAQ
-
-Q1:RDOで環境構築中、タイムアウトエラーがおき、スクリプトが停止しました。
-
-A1:何も設定変更を加えずにもう一度実行し直すと上手くいく場合があります。
-
-ネットワークアクセスと名前解決が頻繁にあり、それらが上手くいかないとスクリプトが途中で終了することがあるようです。
-
-
-Q2:ゲートウェイがDOWNなんですけど
-A2:無視
-
-
-Q3:ステータスを確認するには？
-A3:openstack-statusコマンドを実行！
-
-
-Q4:openstack-statusコマンドを実行するとサービスの一部が動いていないようです
-A4:「RDO Neutron Quickstart」の末尾に注意書きがあります
-
-If you installed the updated kernel and rebooted prior to running packstack, everything should work. If you installed the updated kernel as part of running packstack, you will need to reboot when packstack completes to boot into the new kernel. This reboot will cause br-ex to reset, so after the reboot you will need to re-run packstack as shown below:
-
->--
-# packstack --answer-file=~/packstack-answers-*.txt
---<
-
-同じアンサーファイルを使って、もう一度packstackを実行すると良いようです。
-
-
-Q5:日本語キーボードがつかえない
-A5:コンピュートノードのnova.confに以下のように追記
-
->--
-# vi /etc/nova/nova.conf
-（略）
-# keymap for vnc (string value)
-#vnc_keymap=en-us
-vnc_keymap=ja  #追加する行
-
-
-# service openstack-nova-compute reload
---<
-
-※ただし、OS側が日本語キーボードに対応している必要がある。
-（Cirrosは日本語キーボードを英語キーマップ認識で利用可能）
-
-
-Q6:作成したdemoユーザーの権限でコマンド操作するには
-A6:keystonerc_adminを編集して利用します
-
->--
-# cp /root/keystonerc_admin /root/keystonerc_demo
-（keystonercをコピー）
-
-# vi /root/keystonerc_demo
-
-export OS_USERNAME=demo
-export OS_TENANT_NAME=demo
-export OS_PASSWORD=demo
-export OS_AUTH_URL=http://192.168.1.11:35357/v2.0/
-export PS1='[\u@\h \W(keystone_demo)]\$ '
---<
-
-設定箇所
-・export OS_USERNAMEをdemo
-・export OS_TENANT_NAMEをdemo
-・export OS_PASSWORDをdemoユーザー作成時に設定したパスワード
-・export PS1をkeystone_demoに設定
-
-
-Q7:マルチノードでやるには
-A7:以下公式ドキュメントを参照。
-http://openstack.redhat.com/Adding_a_compute_node
-
-
-Q8:ボリュームの削除をすると状態が「Error_Deleting」のまま、いつまでたっても変わらない
-A8:検索すると類似例がいくつか見つかります｡次の手順で対処可能です｡
-
-【error_deleting関連】
-https://bugzilla.redhat.com/show_bug.cgi?id=888987
-https://bugs.launchpad.net/cinder/+bug/1039706
-https://ask.openstack.org/en/question/1378/cannot-remove-volume/
-
->--
-# cinder list
-+--------------------------------------+----------------+--------------+--
-|                  ID                  |     Status     | Display Name |
-+--------------------------------------+----------------+--------------+--
-| 66f7139e-82c7-4d29-9c17-fe43dd42cac7 | error_deleting |    disk01    |
-+--------------------------------------+----------------+--------------+--
-
-# mysql -u cinder -p -D cinder
-Enter password: 
-（パスワードはanswer.txtの"CONFIG_CINDER_DB_PW"の値を入力）
-
-Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
-
-mysql> delete from volumes where id = '66f7139e-82c7-4d29-9c17-fe43dd42cac7';
-（削除）
-
-# cinder list
-（なくなったことを確認）
---<
-
-以上の手順を実行することで、error_deleting状態の異常なSQLデータを削除できます。
-この方法ではSQLの登録データを削除しただけなので、別途手動でイメージボリュームを削除する必要があります｡
-本来なら、「cinder delete」や「cinder force-delete」コマンドを使って、作成したボリュームを削除できるはずですが、なんらかの理由により削除できなくなった場合はこの手段で削除できます｡

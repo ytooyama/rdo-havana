@@ -3,7 +3,7 @@ RDO Neutron Quickstart Plus
 単体構成編
 ++++++++++++++++++++++++++++++++
 
-最終更新日: 2014/4/9
+最終更新日: 2014/4/11
 
 
 ■この文書について
@@ -71,7 +71,19 @@ http://docs.openstack.org/admin-guide-cloud/content/ch_introduction-to-openstack
 ※仮想化上で実行する場合は、CPUの設定で「仮想化支援機能」を有効にしてください。
 
 
-Step 1: ソフトウェアリポジトリの追加
+Step 1: SELinuxの設定変更
+SELinuxの設定を変更します｡
+
+下記公式サイトのコメントにあるようにSELinuxをpermissiveに設定する
+↓
+ただしdisableにするとpackstackが想定通り動かない模様。
+
+http://openstack.redhat.com/SELinux_issues
+
+Note: Due to the quantum/neutron rename, SELinux policies are currently broken for Havana, so SELinux must be disabled/permissive on machines running neutron services, edit /etc/selinux/config to set SELINUX=permissive.
+
+
+Step 2: ソフトウェアリポジトリの追加
 
 ソフトウェアパッケージのインストールとアップデートを行う｡
 Neutron環境の構築にはSELinuxの設定変更が必要なので設定完了後、一旦再起動する｡
@@ -93,7 +105,7 @@ Note: Due to the quantum/neutron rename, SELinux policies are currently broken f
 --<
 
 
-Step 2: Packstackおよび必要パッケージのインストール
+Step 3: Packstackおよび必要パッケージのインストール
 
 以下のようにコマンドを実行します｡
 
@@ -102,7 +114,7 @@ Step 2: Packstackおよび必要パッケージのインストール
 --<
 
 
-Step 3:アンサーファイルを生成
+Step 4:アンサーファイルを生成
 
 以下のようにコマンドを実行します｡
 
@@ -116,7 +128,7 @@ Step 3:アンサーファイルを生成
 作成したアンサーファイルは1台のマシンにすべてをインストールする設定が行われています｡IPアドレスや各種パスワードなどを適宜設定します｡
 
 
-Step 4:アンサーファイルを自分の環境に合わせて設定
+Step 5:アンサーファイルを自分の環境に合わせて設定
 
 とりあえず1台構成のOpenStack環境を作るには最低限以下のパラメータを設定します。
 
@@ -134,7 +146,7 @@ CONFIG_KEYSTONE_ADMIN_PW=admin
 CONFIG_PROVISION_DEMO=n
 
 
-Step 5: Packstackを実行してOpenStackのインストール
+Step 6: Packstackを実行してOpenStackのインストール
 
 設定を書き換えたアンサーファイルを使ってOpenStackを導入するには、次のようにアンサーファイルを指定して実行します。
 
@@ -143,7 +155,7 @@ Step 5: Packstackを実行してOpenStackのインストール
 --<
 
 
-Step 6: ネットワーク設定の変更
+Step 7: ネットワーク設定の変更
 
 次に外部と通信できるようにするための設定を行います。
 http://openstack.redhat.com/Neutron_with_existing_external_network
@@ -196,7 +208,7 @@ bridge_mappings = physnet1:br-ex
 --<
 
 
-Step 7: ネットワークの追加
+Step 8: ネットワークの追加
 
 br-exにeth0を割り当てて仮想マシンをハイパーバイザー外部と通信できるようにする為の経路が確保されていることを確認します。
 
@@ -306,7 +318,7 @@ Added interface xxxx-xxxx-xxxx-xxxx-xxxx to router router1.
 routerはneutron router-listコマンドで確認、サブネットはneutron subnet-listコマンドで確認することができます。
 
 
-Step 8: ユーザーの追加
+Step 9: ユーザーの追加
 次に、ユーザーの追加を行います｡
 ユーザーを作成する前にユーザーをどのテナント、つまりどのグループに追加するか考えます。作成したテナントにロール、つまり権限を割り振ることで指定した権限を持つユーザーをテナントに追加できます。
 
@@ -383,7 +395,7 @@ demoユーザーにMember権限を割り当てます。
 ・作成したサブネットとルーターをpublicネットワークとつなぐ
 
 
-Step 9: Novaの設定変更
+Step 10: Novaの設定変更
 
 デフォルト設定のままインストールした場合、Novaは仮想化基盤にqemuを利用するようになっています。パフォーマンスを上げるには以下のように設定を変更します。
 
@@ -404,7 +416,7 @@ libvirt_type=kvm
 --<
 
 
-Step 10: インスタンスイメージの登録
+Step 11: インスタンスイメージの登録
 
 OpenStack環境でインスタンスを実行するため、イメージの登録を行ってみます｡
 ここでは動作テスト用としてしばしば利用される、CirrOSを登録してみます｡
@@ -469,94 +481,4 @@ http://cloud-images.ubuntu.com
 
 
 ・Floating IPをインスタンスに割り当て
-・ホストにSSHアクセスしてそこからインスタンスにアクセス（※下記注）
-
-
-■FAQ
-
-Q1:RDOで環境構築中、タイムアウトエラーがおき、スクリプトが停止しました。
-
-A1:何も設定変更を加えずにもう一度実行し直すと上手くいく場合があります。
-
-ネットワークアクセスと名前解決が頻繁にあり、それらが上手くいかないとスクリプトが途中で終了することがあるようです。
-
-
-Q2:ゲートウェイがDOWNなんですけど
-A2:無視
-
-
-Q3:ステータスを確認するには？
-A3:openstack-statusコマンドを実行！
-
-
-Q4:openstack-statusコマンドを実行するとサービスの一部が動いていないようです
-A4:「RDO Neutron Quickstart」の末尾に注意書きがあります
-
-If you installed the updated kernel and rebooted prior to running packstack, everything should work. If you installed the updated kernel as part of running packstack, you will need to reboot when packstack completes to boot into the new kernel. This reboot will cause br-ex to reset, so after the reboot you will need to re-run packstack as shown below:
-
->--
-# packstack --answer-file=~/packstack-answers-*.txt
---<
-
-同じアンサーファイルを使って、もう一度packstackを実行すると良いようです。
-
-
-Q5:仮想ネットワークを作り直したい
-A5:手順はこんな感じ
-
->--
-# source /root/keystonerc_admin
-# neutron router-gateway-clear router1
-# neutron subnet-delete public_subnet
---<
-
-※Floating IPが発行されているとneutron subnet-deleteコマンドの実行に失敗する
-
-作り直して再割り当て
-
->--
-# neutron subnet-create --name public_subnet --enable_dhcp=False --allocation-pool=start=192.168.1.241,end=192.168.1.254 --gateway=192.168.1.1 public 192.168.1.0/24
---<
-
-Q6:日本語キーボードがつかえない
-A6:コンピュートノードのnova.confに以下のように追記
-
->--
-# vi /etc/nova/nova.conf
-（略）
-# keymap for vnc (string value)
-#vnc_keymap=en-us
-vnc_keymap=ja  #追加する行
-
-
-# service openstack-nova-compute reload
---<
-
-※ただし、OS側が日本語キーボードに対応している必要がある。
-（Cirrosは日本語キーボードを英語キーマップ認識で利用可能）
-
-Q7:作成したdemoユーザーの権限でコマンド操作するには
-A7:keystonerc_adminを編集して利用します
-
->--
-# cp /root/keystonerc_admin /root/keystonerc_demo
-（keystonercをコピー）
-
-# vi /root/keystonerc_demo
-
-export OS_USERNAME=demo
-export OS_TENANT_NAME=demo
-export OS_PASSWORD=demo
-export OS_AUTH_URL=http://192.168.1.11:35357/v2.0/
-export PS1='[\u@\h \W(keystone_demo)]\$ '
---<
-
-設定箇所
-・export OS_USERNAMEをdemo
-・export OS_TENANT_NAMEをdemo
-・export OS_PASSWORDをdemoユーザー作成時に設定したパスワード
-・export PS1をkeystone_demoに設定
-
-Q8:マルチノードでやるには
-A8:以下公式ドキュメントを参照。
-http://openstack.redhat.com/Adding_a_compute_node
+・ホストにSSHアクセスしてそこからインスタンスにアクセス
