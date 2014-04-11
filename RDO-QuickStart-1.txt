@@ -3,7 +3,7 @@ RDO Neutron Quickstart Plus
 単体構成編
 ++++++++++++++++++++++++++++++++
 
-最終更新日: 2014/3/31
+最終更新日: 2014/4/9
 
 
 ■この文書について
@@ -98,7 +98,7 @@ Step 2: Packstackおよび必要パッケージのインストール
 以下のようにコマンドを実行します｡
 
 >--
-# yum install -y openstack-packstack python-netaddr
+# yum install -y openstack-packstack python-netaddr libguestfs-tools
 --<
 
 

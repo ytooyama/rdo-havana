@@ -4,7 +4,7 @@ GRE-3台構成編
 CinderバックエンドとしてNFS共有を利用
 +++++++++++++++++++++++++++++++++++
 
-最終更新日: 2014/4/1
+最終更新日: 2014/4/9
 
 
 ■この文書について
@@ -208,8 +208,16 @@ Step 5: システムアップデート
 Step 6: Packstackおよび必要パッケージのインストール
 ノード毎以下のようにコマンドを実行します｡
 
+Glance、Computeを実行するノードでは以下を実行
+
 >--
 # yum install -y openstack-packstack python-netaddr libguestfs-tools
+--<
+
+それ以外のノードでは以下を実行
+
+>--
+# yum install -y openstack-packstack python-netaddr
 --<
 
 
