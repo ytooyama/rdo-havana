@@ -281,7 +281,7 @@ eth1からIPアドレス、サブネットマスク、ゲートウェイの設�
 
 DEVICE=eth1
 ONBOOT=yes
-HWADDR=52:54:00:92:05:AE # your eth0's hwaddr
+HWADDR=52:54:00:92:05:AE # your eth1's hwaddr
 TYPE=OVSPort
 DEVICETYPE=ovs
 OVS_BRIDGE=br-ex
