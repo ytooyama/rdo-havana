@@ -3,7 +3,7 @@ RDO Neutron Quickstart Plus
 単体構成編
 ++++++++++++++++++++++++++++++++
 
-最終更新日: 2014/4/11
+最終更新日: 2014/4/25
 
 
 ■この文書について
@@ -214,28 +214,21 @@ br-exにeth0を割り当てて仮想マシンをハイパーバイザー外部�
 
 >--
 # ovs-vsctl show
-903f6cd5-29f3-4b8d-9cda-3411ddf98ecb
-    Bridge br-int
-        Port "qr-4c4fb9f1-a6"
-            tag: 1
-            Interface "qr-4c4fb9f1-a6"
-                type: internal
-        Port br-int
-            Interface br-int
-                type: internal
-        Port "tap80d3399f-1e"
-            tag: 1
-            Interface "tap80d3399f-1e"
-                type: internal
+d5305735-c3db-410a-9182-f5ec63823c56
     Bridge br-ex
-        Port "qg-bca7776d-14"
-            Interface "qg-bca7776d-14"
-                type: internal
+        Port phy-br-ex
+            Interface phy-br-ex
+        Port "eth1"
+            Interface "eth1"
         Port br-ex
             Interface br-ex
                 type: internal
-        Port "eth1"
-            Interface "eth0"
+    Bridge br-int
+        Port int-br-ex
+            Interface int-br-ex
+        Port br-int
+            Interface br-int
+                type: internal
     ovs_version: "1.11.0"
 --<
 
@@ -266,14 +259,14 @@ OpenStackの環境構成をコマンドで実行する場合は、/root/keystone
 
 ・パブリックネットワークの場合
 >--
-# neutron net-create public --tenant-id 2b0260a2580842abab33b56dae6a145f --router:external=True
+# neutron net-create public --router:external=True --tenant-id 2b0260a2580842abab33b56dae6a145f
 --<
 
 net-createコマンドの先頭にはまずネットワーク名を記述します｡tenant-idは「keystone tenant-list」で出力される中から「テナント」を指定します。router:external=Trueは外部ネットワークとして指定するかしないかを設定します｡プライベートネットワークを作る場合は指定する必要はありません｡
 
 ・プライベートネットワークの場合
 >--
-# neutron net-create demo-net --tenant-id 20a6abed5e8549f29a76fa26b2b1c8db --shared
+# neutron net-create demo-net --shared --tenant-id 20a6abed5e8549f29a76fa26b2b1c8db
 --<
 
 ネットワークを共有するには--sharedオプションを付けて実行します｡
@@ -340,7 +333,7 @@ Step 9: ユーザーの追加
 次にテナントを登録します。
 
 >--
-# keystone tenant-create --name demo --enable true
+# keystone tenant-create --name demo --description demo-tenant --enable true
 （テナントdemoの作成）
 --<
 
@@ -368,6 +361,22 @@ demoユーザーを作成してみます。パスワードはdemoにします。
 パラメータはいくつかあるので--helpで確認。--nameがユーザー名、--passがパスワード、--tenantはテナント(Horizonではプロジェクト)名、--enabledは有効化の可否を指定します｡
 
 tenantはHorizonで登録されている「プロジェクト」を確認するか、コマンドでは次のコマンドで確認できます。
+
+・なぜかMemberロールが作られず、それのせいでHorizonの一部の設定にアクセスするとエラーとなるのでロールを追加します（バグ？）。
+
+>--
+# keystone role-list 
++----------------------------------+----------+
+|                id                |   name   |
++----------------------------------+----------+
+| 9fe2ff9ee4384b1894a90878d3e92bab | _member_ |
+| f45e9a92b3bc4d839a6f5043d5d5bd52 |  admin   |
++----------------------------------+----------+
+
+（Memberロールがなかったら、以下を実行）
+
+# keystone role-create --name Member
+--<
 
 demoユーザーにMember権限を割り当てます。
 

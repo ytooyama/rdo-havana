@@ -3,7 +3,7 @@ RDO Neutron Multi Quickstart Plus
 GRE-Compute 3台構成編
 +++++++++++++++++++++++++++++++++++
 
-最終更新日: 2014/4/11
+最終更新日: 2014/4/25
 
 
 ■この文書について
@@ -215,11 +215,10 @@ Glance、Computeを実行するノードでは以下を実行
 以下の手順にしたがって、各ノードにNTPサーバーを追加します。
 
 >--
-# yum install ntp
-# ntpdate ntp.nict.jp
-# chkconfig ntpd on
-# service ntpd start
+# yum install -y ntp ; ntpdate ntp.nict.jp ; chkconfig ntpd on ; service ntpd start
 --<
+
+できれば一台のノードでNTPDを導入して、他のノードは立ち上げたNTPサーバーを参照するように設定することが推奨される（一部NTPDの設定変更やファイアウォールの設定でudp/123の解放が必要）。
 
 
 Step 8:　アンサーファイルを生成
