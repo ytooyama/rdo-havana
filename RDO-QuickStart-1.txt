@@ -3,7 +3,7 @@ RDO Neutron Quickstart Plus
 単体構成編
 ++++++++++++++++++++++++++++++++
 
-最終更新日: 2014/4/25
+最終更新日: 2014/4/30
 
 
 ■この文書について
@@ -21,7 +21,7 @@ Step 0: 要件
 
 Software: 
 ・Red Hat Enterprise Linux (RHEL) 6.4以降
-・RHEL互換OSのバージョン6.4以降（CentOSなど..）
+・CentOS, Scientific Linux 6.4以降
 ・Fedora 19
 
 Hardware:
@@ -62,7 +62,6 @@ net.ipv4.conf.all.forwarding = 1    #追記
 # sysctl -e -p /etc/sysctl.conf
 （設定を反映）
 --<
-
 
 【参考】
 ・公式ガイド Compute
@@ -137,6 +136,13 @@ Step 5:アンサーファイルを自分の環境に合わせて設定
 ・NICを利用したいものに変更する
 CONFIG_NOVA_COMPUTE_PRIVIF=lo
 CONFIG_NOVA_NETWORK_PRIVIF=lo
+CONFIG_NOVA_NETWORK_PUBIF=eth0
+
+NICが複数ある場合は次のように指定しても良い｡
+（例）eth0がゲートウェイに接続されている場合
+
+CONFIG_NOVA_COMPUTE_PRIVIF=eth1
+CONFIG_NOVA_NETWORK_PRIVIF=eth1
 CONFIG_NOVA_NETWORK_PUBIF=eth0
 
 ・Dashboardにアクセスするパスワード
