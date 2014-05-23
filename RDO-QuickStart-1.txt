@@ -231,8 +231,8 @@ d5305735-c3db-410a-9182-f5ec63823c56
     Bridge br-ex
         Port phy-br-ex
             Interface phy-br-ex
-        Port "eth1"
-            Interface "eth1"
+        Port "eth0"
+            Interface "eth0"
         Port br-ex
             Interface br-ex
                 type: internal
