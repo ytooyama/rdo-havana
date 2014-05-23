@@ -392,7 +392,8 @@ c3f7d983-4248-49eb-a77f-a35d690fd19b
                 type: internal
         Port "eth1"
             Interface "eth1"
-    ovs_version: "1.11.0"--<
+    ovs_version: "1.11.0"
+--<
 
 
 OSやハードウェア側の設定が終わったら、OpenStackが利用するネットワークを作成してみましょう｡OpenStackにおけるネットワークの設定は以下の順で行います｡
