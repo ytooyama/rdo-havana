@@ -120,19 +120,19 @@ Neutron環境の構築にはSELinuxの設定変更が必要なので設定完了
 
 OpenStack環境を作るには最低限以下のパラメータを設定します。
 
-- CONFIG_NOVA_COMPUTE_HOSTSにコンピュートノードを設定
+- __CONFIG_NOVA_COMPUTE_HOSTSにコンピュートノードを設定__
 
 複数のコンピュートノードを追加するにはコンマでIPアドレスを列挙します｡
 
-- 1つ指定する例
+- __1つ指定する例__
 
 CONFIG_NOVA_COMPUTE_HOSTS=192.168.1.10
 
-- 複数指定する例
+- __複数指定する例__
 
 CONFIG_NOVA_COMPUTE_HOSTS=192.168.1.10,192.168.1.11
 
-- NICを利用したいものに変更する
+- __NICを利用したいものに変更する__
 
 （例）eth1がゲートウェイに接続されている場合
 
@@ -152,17 +152,18 @@ CONFIG_NOVA_NETWORK_PRIVIF=eth0
 
 CONFIG_NOVA_NETWORK_PUBIF=eth1
 
-- Dashboardにアクセスするパスワード
+- __Dashboardにアクセスするパスワード__
 
 CONFIG_KEYSTONE_ADMIN_PW=admin
 
-- テスト用demoユーザーとかネットワークを作らないようにする
+- __テスト用demoユーザーとかネットワークを作らないようにする__
 
 CONFIG_PROVISION_DEMO=n
 
-- Cinder VolumeのバックエンドとしてNFSを利用する設定を追記する
+- __Cinder VolumeのバックエンドとしてNFSを利用する設定を追記する__
 
 CONFIG_CINDER_BACKEND=nfs
+
 CONFIG_CINDER_NFS_MOUNTS=192.168.1.9:/nfs
 
 
