@@ -15,6 +15,3 @@ RDOでOpenStack Havanaの色々な環境を作る手順書のようなもので�
 ###RDOってなに？
 
 [公式サイト](http://jp-redhat.com/openstack/rdo/)をご覧ください。
-
-###もうすぐIcehouseが来ますが？
-現在検証しようかなと思っている段階です。
