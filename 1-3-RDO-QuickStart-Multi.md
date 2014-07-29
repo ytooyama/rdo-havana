@@ -82,7 +82,7 @@ Note: Due to the quantum/neutron rename, SELinux policies are currently broken f
 ソフトウェアパッケージのインストールとアップデートを行う｡
 Neutron環境の構築にはSELinuxの設定変更が必要なので設定完了後、一旦再起動する｡
 
-次のコマンドを実行(Fedora 21では不要):
+次のコマンドを実行:
 
 ````
 # yum install -y http://rdo.fedorapeople.org/openstack-havana/rdo-release-havana.rpm
