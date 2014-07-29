@@ -1,4 +1,4 @@
-#RDO Neutron Quickstart Plus ユーザーの追加
+#RDO Neutron Quickstart Plus Novaの設定変更とインスタンスイメージの登録
 
 最終更新日: 2014/7/29
 
