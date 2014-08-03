@@ -1,6 +1,6 @@
 #RDO Neutron Quickstart Plus マルチノード編
 
-最終更新日: 2014/7/31
+最終更新日: 2014/8/3
 
 ##この文書について
 この文書はとりあえず2台構成のOpenStack Havana環境をGRE構成で構築する場合の手順を説明しています。
@@ -323,6 +323,12 @@ IPADDR=192.168.0.101
 NETMASK=255.255.255.0
 NM_CONTROLLED=no
 ````
+- FedoraではここでNetworkManagerからnetworkサービスへの切り替え設定を実行します｡再起動後networkサービスが使われます。
+
+```
+# systemctl disable NetworkManager
+# chkconfig enable network
+```
 
 ここまでできたらいったんホストを再起動します。
 
