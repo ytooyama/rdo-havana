@@ -131,17 +131,17 @@ CONFIG_NOVA_COMPUTE_HOSTS=192.168.1.100
 
 - __複数指定する例__
 
-CONFIG_NOVA_COMPUTE_HOSTS=192.168.1.100,192.168.1.102
+CONFIG_NOVA_COMPUTE_HOSTS=192.168.1.100,192.168.1.101
 
 - __NeutronノードのIPアドレスを設定する__
 
-CONFIG_NEUTRON_SERVER_HOST=192.168.1.101 #On the Controller
+CONFIG_NEUTRON_SERVER_HOST=192.168.1.100 #On the Controller
 
-CONFIG_NEUTRON_L3_HOSTS=192.168.1.102
+CONFIG_NEUTRON_L3_HOSTS=192.168.1.101
 
-CONFIG_NEUTRON_DHCP_HOSTS=192.168.1.102
+CONFIG_NEUTRON_DHCP_HOSTS=192.168.1.101
 
-CONFIG_NEUTRON_METADATA_HOSTS=192.168.1.102
+CONFIG_NEUTRON_METADATA_HOSTS=192.168.1.101
 
 CONFIG_NEUTRON_OVS_TENANT_NETWORK_TYPE=gre
 
@@ -185,7 +185,7 @@ vxlan_udp_port=4789
 tunnel_type=gre
 tunnel_id_ranges=1:1000
 tenant_network_type=gre
-local_ip=192.168.0.100
+local_ip=192.168.1.100
 enable_tunneling=True
 integration_bridge=br-int
 tunnel_bridge=br-tun
@@ -227,7 +227,7 @@ firewall_driver=neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallD
         Port "gre-1"
             Interface "gre-1"
                 type: gre
-                options: {in_key=flow, local_ip="192.168.0.101", out_key=flow, remote_ip="192.168.0.100"}
+                options: {in_key=flow, local_ip="192.168.1.101", out_key=flow, remote_ip="192.168.1.100"}
         Port br-tun
             Interface br-tun
                 type: internal
