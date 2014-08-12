@@ -1,6 +1,6 @@
 #RDO Neutron Quickstart Plus マルチノード編
 
-最終更新日: 2014/8/11
+最終更新日: 2014/8/12
 
 ##この文書について
 この文書はとりあえず2台構成のOpenStack Havana環境をGRE構成で構築する場合の手順を説明しています。
@@ -199,6 +199,7 @@ firewall_driver=neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallD
 
 確認後、両ノードを再起動します。
 再起動後、ovs-vsctl showでトンネルができていることを確認してください。
+環境により、トンネル作成に時間がかかる場合があります。作成されない場合は少々待ってみてください。
 
 ````
 # ovs-vsctl show
@@ -330,3 +331,15 @@ NM_CONTROLLED=no
 ````
 
 以降は単体構成と同様のセットアップ手順で構築できます。
+
+####ネットワークの設定
+
+- https://github.com/ytooyama/rdo-havana/blob/master/2-RDO-QuickStart-Networking.md
+
+####ユーザーの追加
+
+- https://github.com/ytooyama/rdo-havana/blob/master/3-RDO-QuickStart-AddUser.md
+
+####Novaの設定変更とインスタンスイメージの登録
+
+- https://github.com/ytooyama/rdo-havana/blob/master/4-RDO-QuickStart-Others.md
