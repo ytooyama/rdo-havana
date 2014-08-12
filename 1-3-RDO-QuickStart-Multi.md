@@ -18,7 +18,6 @@ RDO Neutron Quickstart
 Software:
 - Red Hat Enterprise Linux (RHEL) 6.4以降
 - CentOS, Scientific Linux 6.4以降
-- Fedora 19
 
 Hardware:
 - CPU 3Core以上
