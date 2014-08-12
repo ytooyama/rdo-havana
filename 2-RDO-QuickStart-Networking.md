@@ -1,6 +1,6 @@
 #RDO Neutron Quickstart Plus ネットワークの設定
 
-最終更新日: 2014/7/29
+最終更新日: 2014/8/12
 
 ##この文書について
 この文書はとりあえず1台に全部入りのOpenStack Havana環境をさくっと構築する場合の手順を説明しています。
@@ -136,6 +136,7 @@ routerはneutron router-listコマンドで確認、サブネットはneutron su
 
 ###◆仮想ルーターが作られたか確認
 neutronコマンドでネットワークを定義したことで仮想ルーター(qrouter)が作られていることを確認します。
+neutron-l3-agentサービスを実行しているノードで確認します。
 
 ````
 # ip netns
