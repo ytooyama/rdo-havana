@@ -2,7 +2,7 @@ rdo-havana
 ==========
 
 ###これはなに
-RDOでOpenStack Havanaの色々な環境を作る手順書のようなものです。
+RDO packstackでOpenStack Havanaの色々な環境を作る手順書のようなものです。
 
 ###環境について
 以下の環境でpackstackコマンドを実行して環境を作ります。OpenStackの中ではそのほかのLinuxも動作します。
@@ -11,6 +11,7 @@ RDOでOpenStack Havanaの色々な環境を作る手順書のようなもので�
 - CentOS 6.4以降
 - Scientific Linux 6.4以降
 - Fedora 19
+- Fedora 20 (標準リポジトリーのパッケージを利用)
 
 ###RDOってなに？
 
