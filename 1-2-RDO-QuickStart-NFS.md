@@ -1,6 +1,6 @@
 #RDO Neutron Quickstart Plus 単体構成編
 
-最終更新日: 2014/8/24
+最終更新日: 2014/9/12
 
 ##この文書について
 この文書はとりあえず1台に全部入りのOpenStack Havana環境をさくっと構築する場合の手順を説明しています。
@@ -17,7 +17,7 @@ RDO Neutron Quickstart
 Software:
 - Red Hat Enterprise Linux (RHEL) 6.4以降
 - CentOS, Scientific Linux 6.4以降
-
+- Fedora 20
 
 Hardware:
 - CPU 3Core以上
@@ -80,7 +80,7 @@ Note: Due to the quantum/neutron rename, SELinux policies are currently broken f
 ソフトウェアパッケージのインストールとアップデートを行う｡
 Neutron環境の構築にはSELinuxの設定変更が必要なので設定完了後、一旦再起動する｡
 
-次のコマンドを実行:
+次のコマンドを実行(Fedora 20では不要):
 
 ````
 # yum install -y http://rdo.fedorapeople.org/openstack-havana/rdo-release-havana.rpm
