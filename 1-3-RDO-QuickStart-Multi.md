@@ -18,7 +18,6 @@ RDO Neutron Quickstart
 Software:
 - Red Hat Enterprise Linux (RHEL) 6.4以降
 - CentOS, Scientific Linux 6.4以降
-- Fedora 20
 
 Hardware:
 - CPU 3Core以上
@@ -324,13 +323,6 @@ IPADDR=192.168.0.101
 NETMASK=255.255.255.0
 NM_CONTROLLED=no
 ````
-
-- FedoraではここでNetworkManagerからnetworkサービスへの切り替え設定を実行します｡再起動後networkサービスが使われます。
-
-```
-# systemctl disable NetworkManager
-# systemctl enable network
-```
 
 ここまでできたらいったんホストを再起動します。
 
