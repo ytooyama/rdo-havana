@@ -188,10 +188,10 @@ ssh_pwauth: True
 ### GRE環境下で何分か経過するとインスタンスへPingが通らなくなる
 
 RHEL 6.4+RDO Kernelの組み合わせ、もしくはRHEL 6.5以降でGRE/VXLANがサポートされます。
-しかし、OpenvSwitchの起動スクリプトが上記を想定した設定を行っていない(GREを使うためのiptables処理を行うコマンドがコメントアウトされている)ため、この処理が実行されません。
+しかし、Open vSwitchの起動スクリプトが上記を想定した設定を行っていない(GREを使うためのiptables処理を行うコマンドがコメントアウトされている)ため、この処理が実行されません。
 結果、最初のうちはネットワーク上の問題が起きませんが、5−10分程度経過するとインスタンスへPingが通らなくなることがあります。
 
-問題を解決するにはRDO Packstackでデプロイした後に、OpenStack各ノードのopenvswitchサービスの処理を書き換える必要があります。
+問題を解決するにはRDO Packstackでデプロイした後に、OpenStack各ノードのOpen vSwitchサービスの処理を書き換える必要があります。
 
 ````
 # vi /etc/init.d/openvswitch
