@@ -1,4 +1,4 @@
-#RDO Neutron Quickstart Plus Novaの設定変更とインスタンスイメージの登録
+#RDO Neutron Quickstart Plus Novaの設定変更とインスタンスイメージの登録,QA
 
 最終更新日: 2014/9/22
 
@@ -201,7 +201,7 @@ RHEL 6.4+RDO Kernelの組み合わせ、もしくはRHEL 6.5以降でGRE/VXLAN�
     $ovs_ctl --protocol=gre enable-protocol
 ````
 
-設定を書き換えたら、openvswitchサービスを再起動します。
+設定を書き換えたら、openvswitchとnetworkサービスを再起動します。
 
 ````
 # service openvswitch restart
@@ -212,6 +212,8 @@ Configuring Open vSwitch system IDs                        [  OK  ]
 Starting ovs-vswitchd                                      [  OK  ]
 Enabling remote OVSDB managers                             [  OK  ]
 Enabling gre with iptables                                 [  OK  ]
+
+# service network restart
 ````
 
 以下のように実行して、iptablesの設定が許可されたことを確認してください。
