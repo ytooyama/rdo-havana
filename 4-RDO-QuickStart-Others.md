@@ -1,6 +1,6 @@
 #RDO Neutron Quickstart Plus Novaの設定変更とインスタンスイメージの登録
 
-最終更新日: 2014/9/17
+最終更新日: 2014/9/22
 
 ##この文書について
 この文書はとりあえず1台に全部入りのOpenStack Havana環境をさくっと構築する場合の手順を説明しています。
@@ -184,3 +184,41 @@ ssh_pwauth: True
 ````
 
 上記例はパスワードを"vmpass"にする例です。最低この4行があれば実現できます。
+
+### GRE環境下で何分か経過するとインスタンスへPingが通らなくなる
+
+RHEL 6.4+RDO Kernelの組み合わせ、もしくはRHEL 6.5以降でGRE/VXLANがサポートされます。
+しかし、openvswitchの設定でGREを使うためのiptables処理を行うコマンドがコメントアウトされているため、この処理が実行されません。
+結果、最初のうちはネットワーク上の問題が起きませんが、5分程度経過するとインスタンスへPingが通らなくなることがあります。
+
+問題を解決するにはRDO Packstackでデプロイした後に、OpenStack各ノードのopenvswitchサービスの処理を書き換える必要があります。
+
+````
+# vi /etc/init.d/openvswitch
+# RHEL6 does not support OVS GRE tunneling yet, do not add iptables GRE rule
+#    $ovs_ctl --protocol=gre enable-protocol
+↓
+    $ovs_ctl --protocol=gre enable-protocol
+````
+
+設定を書き換えたら、openvswitchサービスを再起動します。
+
+````
+# service openvswitch restart
+Killing ovs-vswitchd (1304)                                [  OK  ]
+Killing ovsdb-server (1268)                                [  OK  ]
+Starting ovsdb-server                                      [  OK  ]
+Configuring Open vSwitch system IDs                        [  OK  ]
+Starting ovs-vswitchd                                      [  OK  ]
+Enabling remote OVSDB managers                             [  OK  ]
+Enabling gre with iptables                                 [  OK  ]
+````
+
+以下のように実行して、iptablesの設定が許可されたことを確認してください。
+
+````
+# iptables-save|grep gre
+-A INPUT -p gre -j ACCEPT
+````
+
+以上で問題が解決できるか様子を見てください。
