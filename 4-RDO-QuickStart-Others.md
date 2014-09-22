@@ -223,4 +223,21 @@ Enabling gre with iptables                                 [  OK  ]
 -A INPUT -p gre -j ACCEPT
 ````
 
-以上で問題が解決できるか様子を見てください。
+####問題の確認手順
+
+以下のようにコマンドを実行して、GRE(47)のnf_conntrackエントリーの状態を確認します。600秒ネットワークトラフィックがないとエントリが消えます。
+出力がなくなったあと、インスタンスのFloating IPアドレスにPingを飛ばしてみましょう。
+
+Pingを実行するとインスタンスへのPingが通り、かつnf_conntrackエントリーが復活します（→これが正常な動きです）。
+
+詳細は<http://www.asahi-net.or.jp/~aa4t-nngk/ipttut/output/theconntrackentries.html> (文字コード:euc-jp)を参照してください。
+
+````
+# watch cat /proc/net/nf_conntrack\| grep unknown
+Every 2.0s: cat /proc/net/nf_conntrack| grep unknown                                                                                                                    Mon Sep 22 19:12:18 2014
+
+ipv4     2 unknown  47 600 src=172.17.14.11 dst=172.17.14.12 src=172.17.14.12 dst=172.17.14.11 mark=0 secmark=0 use=2
+````
+
+うまくいかない場合は、"$ovs_ctl --protocol=gre enable-protocol"の設定をいじったノードすべてを再起動してください。
+ちなみに[バグとして報告](https://bugzilla.redhat.com/show_bug.cgi?id=1011803)されていますが、却下されました。
