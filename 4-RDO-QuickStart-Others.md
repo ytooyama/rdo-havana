@@ -185,6 +185,56 @@ ssh_pwauth: True
 
 上記例はパスワードを"vmpass"にする例です。最低この4行があれば実現できます。
 
+### インスタンスで外部ネットワークにアクセスしようとすると応答がなくなったり切断される
+
+OpenStackをVXLANやGREモード(特にVXLAN)で稼働させた場合、MTU溢れの問題が発生することがあります。
+その結果インスタンスとのSSH接続が切断されたり、Pingに対する応答がなくなるなどの問題が発生します。
+
+VXLANとMTUについては以下に少々記述があり、参考になります。
+<http://www.cisco.com/cisco/web/support/JP/docs/SW/DCSWT/Nex1000VSWT/CG/026/b_VXLAN_Configuration_4_2_1SV_2_1_1_chapter_010.html?bid=0900e4b182e40102>
+
+CirrOSなどパスワード認証できるイメージから起動して、インスタンスでファイルのコピーを実行してみてください。
+一度目はダウンロードが行えず、二回目のwgetで正常にダウンロードできればこの問題にあたっている可能性があります。
+
+````
+$ wget hogehoge
+$ sudo ifconfig eth0 mtu 1450
+$ wget hogehoge
+````
+
+インスタンスの起動のさいに対処する方法として、OpenStack DashBoardを使ってインスタンスを起動する際に、カスタマイズ・スクリプトでcloud-configを書く方法があります。
+この方法はLinuxインスタンスでのみ有効です。もしくはインスタンス起動後に/etc/rc.localに直接記述してもよいです。
+
+````
+#cloud-config
+bootcmd:
+ - echo "ifconfig eth0 mtu 1450" > /etc/rc.local
+````
+
+もう少し現実的な方法として、DHCPサーバーのdhcp-optionでMTU 1450などを渡す方法があります。
+OpenStackのデフォルト構成ではdnsmasqを利用していますので、以下のように設定してください。
+
+まずはdhcp_agentの設定を行います。
+
+````
+# vi /etc/neutron/dhcp_agent.ini
+dnsmasq_config_file=/etc/dnsmasq.d/dnsmasq.conf
+````
+
+つぎにMTU 1450を設定します。
+
+````
+# vi /etc/dnsmasq.d/dnsmasq.conf
+dhcp-option=26,1450
+````
+
+あとはdnsmasqとneutron-dhcp-agentサービスを再起動します。
+
+````
+# service dnsmasq restart
+# service neutron-dhcp-agent restart
+````
+
 ### GRE環境下で何分か経過するとインスタンスへPingが通らなくなる
 
 RHEL 6.4+RDO Kernelの組み合わせ、もしくはRHEL 6.5以降でGRE/VXLANがサポートされます。
