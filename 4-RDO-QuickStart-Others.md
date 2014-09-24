@@ -290,4 +290,4 @@ ipv4     2 unknown  47 600 src=172.17.14.11 dst=172.17.14.12 src=172.17.14.12 ds
 ````
 
 うまくいかない場合は、"$ovs_ctl --protocol=gre enable-protocol"の設定をいじったノードすべてを再起動してください。
-ちなみに[バグとして報告](https://bugzilla.redhat.com/show_bug.cgi?id=1011803)されていますが、却下されました。
+ちなみに[バグとして報告](https://bugzilla.redhat.com/show_bug.cgi?id=1011803)されていますが、「この設定はPackstack側では対応はせず、必要な場合に各自で設定すべき」とのことで却下されました。
